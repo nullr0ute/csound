@@ -175,21 +175,23 @@ static int MidiOutDeviceOpen(CSOUND *csound, void **userData, const char *dev)
 }
 
 /* used to distinguish between 1 and 2-byte messages */
-static  const   int     datbyts[8] = { 2, 2, 2, 2, 1, 1, 2, 0 };
+//static  const   int     datbyts[8] = { 2, 2, 2, 2, 1, 1, 2, 0 };
 
 /* csound MIDI read callback, called every k-cycle */
 static int MidiDataRead(CSOUND *csound, void *userData,
-                         unsigned char *mbuf, int nbytes)
+                         MIDIMESSAGE *mbuf, int nbytes)
 {
     cdata *data = (cdata *)userData;
     MIDIdata *mdata = data->mdata;
-    int *q = &data->q, st, d1, d2, n = 0;
+    int *q = &data->q, n = 0;
+    unsigned char st;
+    MIDIMESSAGE mmsg;
 
     /* check if there is new data in circular queue */
     while (mdata[*q].flag) {
-      st = (int) mdata[*q].status;
-      d1 = (int) mdata[*q].data1;
-      d2 = (int) mdata[*q].data2;
+      st = mmsg.bData[0] = mdata[*q].status;
+      mmsg.bData[1] = mdata[*q].data1;
+      mmsg.bData[2] = mdata[*q].data2;
 
       if (st < 0x80) goto next;
 
@@ -197,25 +199,12 @@ static int MidiDataRead(CSOUND *csound, void *userData,
           !(st == 0xF8 || st == 0xFA || st == 0xFB ||
             st == 0xFC || st == 0xFF)) goto next;
 
-      nbytes -= (datbyts[(st - 0x80) >> 4] + 1);
+      nbytes--;
       if (nbytes < 0) break;
 
       /* write to csound midi buffer */
-      n += (datbyts[(st - 0x80) >> 4] + 1);
-      switch (datbyts[(st - 0x80) >> 4]) {
-      case 0:
-        *mbuf++ = (unsigned char) st;
-        break;
-      case 1:
-        *mbuf++ = (unsigned char) st;
-        *mbuf++ = (unsigned char) d1;
-        break;
-      case 2:
-        *mbuf++ = (unsigned char) st;
-        *mbuf++ = (unsigned char) d1;
-        *mbuf++ = (unsigned char) d2;
-        break;
-      }
+      n++;
+      memcpy(mbuf++, &mmsg, sizeof(MIDIMESSAGE));
       /* mark as read */
     next:
       mdata[*q].flag = 0;

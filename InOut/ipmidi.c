@@ -111,8 +111,8 @@ static int OpenMidiInDevice_(CSOUND *csound, void **userData, const char *dev)
 }
 
 static int ReadMidiData_(CSOUND *csound, void *userData,
-                         unsigned char *mbuf, int nbytes)
-{
+                         MIDIMESSAGE *mbuf, int nbytes)
+{ 
     int             n;
     int             sock = *((int *) userData);
     fd_set          rset;
@@ -126,14 +126,14 @@ static int ReadMidiData_(CSOUND *csound, void *userData,
     timeout.tv_usec = 0;
 
     rc = select(sock + 1, &rset, NULL, NULL, &timeout);
-    if (rc > 0) {
-#ifdef WIN32
-      n = recv(sock, mbuf, nbytes, 0);
-#else
-      n = read(sock, mbuf, nbytes);
-#endif
-      printf("ReadMidiData__ n = %d\n", n);
-    }
+/*     if (rc > 0) { */
+/* #ifdef WIN32 */
+/*       n = recv(sock, mbuf, nbytes, 0); */
+/* #else */
+/*       n = read(sock, mbuf, nbytes); */
+/* #endif */
+/*       printf("ReadMidiData__ n = %d\n", n); */
+/*     } */
 
     /* return the number of bytes read */
     return n;

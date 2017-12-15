@@ -45,7 +45,7 @@ void _wassert(wchar_t *condition)
 
 typedef struct _pmall_data {
   PortMidiStream *midistream;
-  int dev_offset;
+  int devnum;
   struct _pmall_data *next;
 } pmall_data;
 
@@ -234,7 +234,7 @@ static int OpenMidiInDevice_(CSOUND *csound, void **userData, const char *dev)
     if (dev == NULL || dev[0] == '\0')
       devnum =
         portMidi_getPackedDeviceID((int)Pm_GetDefaultInputDeviceID(), 0);
-    else if (UNLIKELY((dev[0] < '0' || dev[0] > '9') && dev[0] != 'a')) {
+    else if (UNLIKELY((dev[0] < '0' || dev[0] > '9') && dev[0] != 'a' && dev[0] != 'x')) {
       portMidiErrMsg(csound,
                      Str("error: must specify a device number (>=0) or"
                          " 'a' for all, 'x' for extended, not a name"));
@@ -251,13 +251,13 @@ static int OpenMidiInDevice_(CSOUND *csound, void **userData, const char *dev)
     // allow to proceed if 'a'/'x' is given even if there are no MIDI devices
       devnum = -1;
     }
-
+    
     if (UNLIKELY(cntdev < 1 && (dev==NULL || dev[0] != 'a' || dev[0] != 'x'))) {
       return portMidiErrMsg(csound, Str("no input devices are available"));
     }
     opendevs = 0;
     for (i = 0; i < cntdev; i++) {
-      if (devnum == i || devnum == -1) {
+      if (devnum == i || dev[0] == 'a' || dev[0] == 'x' || devnum == -1) {
         if (opendevs == 0) {
           data = (pmall_data *) csound->Malloc(csound, sizeof(pmall_data));
           next = data;
@@ -282,7 +282,9 @@ static int OpenMidiInDevice_(CSOUND *csound, void **userData, const char *dev)
         retval = Pm_OpenInput(&next->midistream,
                  (PmDeviceID) portMidi_getRealDeviceID(i, 0),
                          NULL, 512L, (PmTimeProcPtr) NULL, NULL);
-	next->dev_offset = dev[0] == 'a' ? 0 : i;
+	// record device number so we can potentially send
+	// streams to different internal ports
+	next->devnum = dev[0] == 'a' ? 0 : i;
         if (UNLIKELY(retval != pmNoError)) {
           // Prevent leaking memory from "data"
           if (data) {
@@ -358,9 +360,11 @@ static int OpenMidiOutDevice_(CSOUND *csound, void **userData, const char *dev)
 }
 
 static int ReadMidiData_(CSOUND *csound, void *userData,
-                         unsigned char *mbuf, int nbytes)
+                         MIDIMESSAGE *mbuf, int nitems)
 {
-    int             n, retval, st, d1, d2;
+   int             n, retval;
+   unsigned char st;
+    MIDIMESSAGE mmsg;
     PmEvent         mev;
     pmall_data *data;
     /*
@@ -374,9 +378,11 @@ static int ReadMidiData_(CSOUND *csound, void *userData,
         if (UNLIKELY(retval < 0))
           return portMidiErrMsg(csound, Str("error polling input device"));
         while ((retval = Pm_Read(data->midistream, &mev, 1L)) > 0) {
-          st = (int)Pm_MessageStatus(mev.message);
-          d1 = (int)Pm_MessageData1(mev.message);
-          d2 = (int)Pm_MessageData2(mev.message);
+          st = mmsg.bData[0] = Pm_MessageStatus(mev.message);
+          mmsg.bData[1]  = Pm_MessageData1(mev.message);
+          mmsg.bData[2]  = Pm_MessageData2(mev.message);
+	  mmsg.bData[3]  = data->devnum;
+	  
           /* unknown message or sysex data: ignore */
           if (UNLIKELY(st < 0x80))
             continue;
@@ -385,27 +391,15 @@ static int ReadMidiData_(CSOUND *csound, void *userData,
                        !(st == 0xF8 || st == 0xFA || st == 0xFB ||
                          st == 0xFC || st == 0xFF)))
             continue;
-          nbytes -= (datbyts[(st - 0x80) >> 4] + 1);
-          if (UNLIKELY(nbytes < 0)) {
+          nitems--;
+          if (UNLIKELY(nitems < 0)) {
             portMidiErrMsg(csound, Str("buffer overflow in MIDI input"));
             break;
           }
           /* channel messages */
-          n += (datbyts[(st - 0x80) >> 4] + 1);
-          switch (datbyts[(st - 0x80) >> 4]) {
-            case 0:
-              *mbuf++ = (unsigned char) st;
-              break;
-            case 1:
-              *mbuf++ = (unsigned char) st;
-              *mbuf++ = (unsigned char) d1;
-              break;
-            case 2:
-              *mbuf++ = (unsigned char) st;
-              *mbuf++ = (unsigned char) d1;
-              *mbuf++ = (unsigned char) d2;
-              break;
-          }
+          n++;
+          memcpy(mbuf++, &mmsg, sizeof(MIDIMESSAGE));
+	  
         }
         if (UNLIKELY(retval < 0)) {
           portMidiErrMsg(csound, Str("read error %d"), retval);
@@ -414,6 +408,7 @@ static int ReadMidiData_(CSOUND *csound, void *userData,
         }
       }
       data = data->next;
+      
     }
     /* return the number of bytes read */
     return n;

@@ -1306,7 +1306,7 @@ PUBLIC CSOUND *csoundCreate(void *hostdata)
 int DummyMidiInOpen(CSOUND *csound, void **userData,
                            const char *devName);
 int DummyMidiRead(CSOUND *csound, void *userData,
-                         unsigned char *buf, int nbytes);
+                         MIDIMESSAGE *buf, int nbytes);
 int DummyMidiOutOpen(CSOUND *csound, void **userData,
                             const char *devName);
 int DummyMidiWrite(CSOUND *csound, void *userData,
@@ -2856,7 +2856,7 @@ int DummyMidiInOpen(CSOUND *csound, void **userData,
 }
 
 int DummyMidiRead(CSOUND *csound, void *userData,
-                         unsigned char *buf, int nbytes)
+                         MIDIMESSAGE *buf, int nbytes)
 {
     (void) csound;
     (void) userData;
@@ -2924,7 +2924,7 @@ PUBLIC void csoundSetExternalMidiInOpenCallback(CSOUND *csound,
 PUBLIC void csoundSetExternalMidiReadCallback(CSOUND *csound,
                                               int (*func)(CSOUND *,
                                                           void *,
-                                                          unsigned char *, int))
+                                                          MIDIMESSAGE *, int))
 {
     csound->midiGlobals->MidiReadCallback = func;
 }

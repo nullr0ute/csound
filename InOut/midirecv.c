@@ -34,9 +34,9 @@
       and a non-zero error code if an error occured.
 
     int (*MidiReadCallback)(CSOUND *csound,
-                            void *userData, unsigned char *buf, int nbytes);
+                            void *userData, MIDIMESSAGE *buf, int items);
 
-      Read at most 'nbytes' bytes of MIDI data from input stream
+      Read at most 'items' MIDI data messages from input stream
       'userData', and store in 'buf'. Returns the actual number of
       bytes read, which may be zero if there were no events, and
       negative in case of an error. Note: incomplete messages (such
@@ -113,7 +113,7 @@ static const MYFLT dsctl_map[12] = {
     FL(1.0), FL(0.0), FL(1.0), FL(0.0), FL(1.0), FL(0.0)
 };
 
-static const int16 datbyts[8] = { 2, 2, 2, 2, 1, 1, 2, 0 };
+//static const int16 datbyts[8] = { 2, 2, 2, 2, 1, 1, 2, 0 };
 
 /* open a Midi event stream for reading, alloc bufs */
 /*     callable once from main.c                    */
@@ -479,10 +479,11 @@ int sensMidi(CSOUND *csound)
     MGLOBAL *p = csound->midiGlobals;
     MEVENT  *mep = p->Midevtblk;
     OPARMS  *O = csound->oparms;
+    MIDIMESSAGE *mmsg;
     int     n;
     int16   c, type;
 
- nxtchr:
+    do {
     if (p->bufp >= p->endatp) {
       p->bufp = &(p->mbuf[0]);
       p->endatp = p->bufp;
@@ -494,18 +495,23 @@ int sensMidi(CSOUND *csound)
         else
           p->endatp += (int) n;
       }
-      if (O->FMidiin) {                         /* read MIDI file */
+      
+      /* read MIDI file */
+      /* 
+      if (O->FMidiin) {                         
         n = csoundMIDIFileRead(csound, p->endatp,
                                MBUFSIZ - (int) (p->endatp - p->bufp));
         if (n > 0)
           p->endatp += (int) n;
-      }
+      } */
       if (p->endatp <= p->bufp)
         return 0;               /* no events were received */
     }
-
-    if ((c = *(p->bufp++)) & 0x80) {    /* STATUS byte:         */
+    mmsg = p->bufp++;
+    c = mmsg->bData[0];
+    if (c & 0x80) {    /* STATUS byte:         */
       type = c & 0xF0;
+      p->sexp = 0;
       if (type == SYSTEM_TYPE) {
         int16 lo3 = (c & 0x07);
         if (c & 0x08)                   /* sys_realtime:        */
@@ -516,17 +522,17 @@ int sensMidi(CSOUND *csound)
           case 4:                       /* stop                 */
           case 6:                       /* active sensing       */
           case 7:                       /* system reset         */
-            goto nxtchr;
+            continue;
           default:
             csound->Message(csound, Str("undefined sys-realtime msg %x\n"), c);
-            goto nxtchr;
+            continue;
           }
         else {                          /* sys_non-realtime status: */
           p->sexp = 0;                  /* implies sys_exclus end   */
           switch (lo3) {                /* dispatch on lo3:     */
-          case 7: goto nxtchr;          /* EOX: already done    */
+          case 7: continue;          /* EOX: already done    */
           case 0: p->sexp = 1;          /* sys_ex begin:        */
-            goto nxtchr;                /*   goto copy data     */
+            continue;               /*   goto copy data     */
           /* sys_common: need some data, so build evt */
           case 1:                       /* MTC quarter frame    */
           case 3: p->datreq = 1;        /* song select          */
@@ -534,18 +540,18 @@ int sensMidi(CSOUND *csound)
           case 2: p->datreq = 2;        /* song position        */
             break;
           case 6:                       /* tune request         */
-            goto nxtchr;
+            continue;
           default:
             csound->Message(csound, Str("undefined sys_common msg %x\n"), c);
             p->datreq = 32767;          /* waste any data following */
             p->datcnt = 0;
-            goto nxtchr;
+            continue;
           }
         }
         mep->type = type;               /* begin sys_com event  */
         mep->chan = lo3;                /* holding code in chan */
         p->datcnt = 0;
-        goto nxtchr;
+        continue;
       }
       else {                            /* other status types:  */
         int16 chan;
@@ -553,35 +559,31 @@ int sensMidi(CSOUND *csound)
         chan = c & 0xF;
         mep->type = type;               /* & begin new event    */
         mep->chan = chan;
-        p->datreq = datbyts[(type>>4) & 0x7];
-        p->datcnt = 0;
-        goto nxtchr;
       }
-    }
+    } else continue;
+    
     if (p->sexp != 0) {                 /* NON-STATUS byte:     */
-      goto nxtchr;
+      continue;
     }
-    if (p->datcnt == 0)
-      mep->dat1 = c;                    /* else normal data     */
-    else mep->dat2 = c;
-    if (++p->datcnt < p->datreq)        /* if msg incomplete    */
-      goto nxtchr;                      /*   get next char      */
+    mep->dat1 = mmsg->bData[1];
+    mep->dat2 = mmsg->bData[2];
+    mep->dev =  mmsg->bData[3];
+    printf("Dev=%lld \n", mep->dev);
     /* Enter the input event into a buffer used by 'midiin'. */
     if (mep->type != SYSTEM_TYPE) {
-      unsigned char *pMessage =
-                    &(p->MIDIINbuffer2[p->MIDIINbufIndex++].bData[0]);
+      MIDIMESSAGE *pMessage =
+                    &(p->MIDIINbuffer2[p->MIDIINbufIndex++]);
       p->MIDIINbufIndex &= MIDIINBUFMSK;
-      *pMessage++ = mep->type | mep->chan;
-      *pMessage++ = (unsigned char) mep->dat1;
-      *pMessage = (p->datreq < 2 ? (unsigned char) 0 : mep->dat2);
+      memcpy(pMessage, mmsg, sizeof(MIDIMESSAGE));
+           
     }
-    p->datcnt = 0;                      /* else allow a repeat  */
     /* NB:  this allows repeat in syscom 1,2,3 too */
     if (mep->type > NOTEON_TYPE) {      /* if control or syscom */
-      m_chanmsg(csound, mep);           /*   handle from here   */
-      goto nxtchr;                      /*   & go look for more */
-    }
-    return 2;                           /* else it's note_on/off */
+        m_chanmsg(csound, mep);           /*   handle from here   */
+	continue;
+      }
+     return 2;                           /* else it's note_on/off */
+   } while(1);  
 }
 
 extern void csoundCloseMidiOutFile(CSOUND *);

@@ -722,7 +722,7 @@ void CsoundCallbackWrapper::SetYieldCallback()
 void CsoundCallbackWrapper::SetMidiInputCallback(CsoundArgVList *argv)
 {
     csoundSetExternalMidiInOpenCallback(csound_, midiInOpenCallback);
-    csoundSetExternalMidiReadCallback(csound_, midiInReadCallback);
+    //csoundSetExternalMidiReadCallback(csound_, midiInReadCallback);
     csoundSetExternalMidiInCloseCallback(csound_, midiInCloseCallback);
     if (argv != (CsoundArgVList*) 0) {
       argv->Append("-+rtmidi=null");
@@ -1070,7 +1070,7 @@ void CsoundMidiInputStream::EnableMidiInput(CsoundArgVList *argv)
     *((void**) csoundQueryGlobalVariable(csound, "__csnd_MidiInObject")) =
         (void*) this;
     csoundSetExternalMidiInOpenCallback(csound, midiInOpenCallback);
-    csoundSetExternalMidiReadCallback(csound, midiInReadCallback);
+    //csoundSetExternalMidiReadCallback(csound, midiInReadCallback);
     csoundSetExternalMidiInCloseCallback(csound, midiInCloseCallback);
     if (argv != (CsoundArgVList*) 0) {
       argv->Append("-+rtmidi=null");

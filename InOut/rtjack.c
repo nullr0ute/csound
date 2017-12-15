@@ -1233,10 +1233,33 @@ static int midi_in_open(CSOUND *csound,
 }
 
 static int midi_in_read(CSOUND *csound,
-                        void *userData, unsigned char *buf, int nbytes)
+                        void *userData, MIDIMESSAGE *mbuf, int items)
 {
     jackMidiDevice *dev = (jackMidiDevice *) userData;
-    return csound->ReadCircularBuffer(csound,dev->cb,buf,nbytes);
+    unsigned char b, st;
+    int ndx = 0, n = 0;
+    
+    while(csound->ReadCircularBuffer(csound,dev->cb,&b,1) > 0 && n < items) {
+      if(ndx == 0) st = b;
+      if (st >= 0xF0 &&
+          !(st == 0xF8 || st == 0xFA || st == 0xFB ||
+            st == 0xFC || st == 0xFF)) continue;
+       mbuf->bData[ndx++] = b;
+       switch(st & 0xF0) {
+	 case 0xC0:
+	 case 0xD0:
+	   ndx = ndx == 1 ? 0 : 1;
+	   break;
+         default:
+           ndx = ndx == 2 ? 0 : ndx+1;
+       }
+       if(ndx == 0 || ndx > 3) {
+	 mbuf++;
+	 n++;
+	 ndx = 0;
+       }
+      }
+    return n;   
 }
 
 static int midi_in_close(CSOUND *csound, void *userData){

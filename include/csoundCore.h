@@ -706,6 +706,7 @@ typedef struct CORFIL {
     int16   chan;
     int16   dat1;
     int16   dat2;
+    int64_t   dev;   // dev -- 8byte align
   } MEVENT;
 
   typedef struct SNDMEMFILE_ {
@@ -784,13 +785,6 @@ typedef struct CORFIL {
 #define MIDIINBUFMAX    (1024)
 #define MIDIINBUFMSK    (MIDIINBUFMAX-1)
 
-
-
-  typedef union {
-    uint32 dwData;
-    unsigned char bData[4];
-  } MIDIMESSAGE;
-
   /* MIDI globals */
 
   typedef struct midiglobals {
@@ -800,7 +794,7 @@ typedef struct CORFIL {
     int     MIDIINbufIndex;
     MIDIMESSAGE MIDIINbuffer2[MIDIINBUFMAX];
     int     (*MidiInOpenCallback)(CSOUND *, void **, const char *);
-    int     (*MidiReadCallback)(CSOUND *, void *, unsigned char *, int);
+    int     (*MidiReadCallback)(CSOUND *, void *, MIDIMESSAGE *, int);
     int     (*MidiInCloseCallback)(CSOUND *, void *);
     int     (*MidiOutOpenCallback)(CSOUND *, void **, const char *);
     int     (*MidiWriteCallback)(CSOUND *, void *, const unsigned char *, int);
@@ -812,8 +806,8 @@ typedef struct CORFIL {
     void    *midiOutFileData;
     int     rawControllerMode;
     char    muteTrackList[256];
-    unsigned char mbuf[MBUFSIZ];
-    unsigned char *bufp, *endatp;
+    MIDIMESSAGE mbuf[MBUFSIZ];
+    MIDIMESSAGE *bufp, *endatp;
     int16   datreq, datcnt;
   } MGLOBAL;
 
@@ -1236,7 +1230,7 @@ typedef struct NAME__ {
     void (*SetExternalMidiInOpenCallback)(CSOUND *,
                 int (*func)(CSOUND *, void **, const char *));
     void (*SetExternalMidiReadCallback)(CSOUND *,
-                int (*func)(CSOUND *, void *, unsigned char *, int));
+                int (*func)(CSOUND *, void *, MIDIMESSAGE *, int));
     void (*SetExternalMidiInCloseCallback)(CSOUND *,
                 int (*func)(CSOUND *, void *));
     void (*SetExternalMidiOutOpenCallback)(CSOUND *,

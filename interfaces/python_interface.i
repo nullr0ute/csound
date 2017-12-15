@@ -229,8 +229,8 @@ static int PythonMidiInClose(CSOUND *in, void *udata){
 }
 
 static int PythonMidiRead(CSOUND *in, void *udata,
-                                  unsigned char *buf, int nBytes){
-    PyObject *res;
+                                  MIDIMESSAGE *buf, int nBytes){
+  /* PyObject *res;
     int i;
     Csound *p = (Csound *) csoundGetHostData(in);
     pycbdata *pydata = (pycbdata *)p->pydata;
@@ -248,7 +248,7 @@ static int PythonMidiRead(CSOUND *in, void *udata,
      else for(i=0; i < nBytes; i++)  buf[i] = 0;
      Py_DECREF(res);
      }
-    PyGILState_Release(gst);
+     PyGILState_Release(gst);*/
     return 0;
 }
 

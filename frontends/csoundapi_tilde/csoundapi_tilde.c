@@ -117,7 +117,7 @@ static void csoundapi_bend(t_csoundapi *, t_floatarg, t_floatarg);
 
 static int open_midi_callback(CSOUND *cs, void **userData, const char *dev);
 static int read_midi_callback(CSOUND *cs, void *userData,
-                              unsigned char *mbuf, int nbytes);
+                              MIDIMESSAGE *mbuf, int nbytes);
 static int close_midi_callback(CSOUND *cs, void *userData);
 
 static void csoundapi_tabset(t_csoundapi *x, t_symbol *tab, t_float f);
@@ -787,9 +787,10 @@ static int close_midi_callback(CSOUND *cs, void *userData)
 }
 
 static int read_midi_callback(CSOUND *cs, void *userData,
-                              unsigned char *mbuf, int nbytes)
+                              MIDIMESSAGE *mbuf, int nbytes)
 {
-    t_csoundapi *x = (t_csoundapi *) csoundGetHostData(cs);
+  /*
+  t_csoundapi *x = (t_csoundapi *) csoundGetHostData(cs);
     midi_queue *mq = x->mq;
     if (mq == NULL) {
       return -1;
@@ -808,6 +809,8 @@ static int read_midi_callback(CSOUND *cs, void *userData,
 
     mq->readp = rp;
     return nread;
+  */
+  return 0;
 }
 
 #define MIDI_COMMON                                                     \

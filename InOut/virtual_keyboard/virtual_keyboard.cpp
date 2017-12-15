@@ -345,16 +345,17 @@ static int ReadMidiWidget(CSOUND *csound, FLTKKeyboardWidget *widget,
 }
 
 static int ReadMidiData_(CSOUND *csound, void *userData,
-                         unsigned char *mbuf, int nbytes)
+                         MIDIMESSAGE *mbuf, int nbytes)
 {
 
-    if(keyboardWidgets.find(csound) == keyboardWidgets.end()) {
+  /* if(keyboardWidgets.find(csound) == keyboardWidgets.end()) {
         return ReadMidiWindow(csound,
                 (FLTKKeyboardWindow *)userData, mbuf, nbytes);
     }
 
     return ReadMidiWidget(csound,
-        keyboardWidgets[csound], mbuf, nbytes);
+    keyboardWidgets[csound], mbuf, nbytes); */
+  return 0;
 }
 
 static int WriteMidiData_(CSOUND *csound, void *userData,

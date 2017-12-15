@@ -504,6 +504,11 @@ extern "C" {
     int isOutput;
   } CS_MIDIDEVICE;
 
+  typedef union {
+    uint32 dwData;
+    unsigned char bData[4];
+  } MIDIMESSAGE;
+
 
   /**
    * Real-time audio parameters structure
@@ -1359,7 +1364,7 @@ extern "C" {
   PUBLIC void csoundSetExternalMidiReadCallback(CSOUND *,
                                                 int (*func)(CSOUND *,
                                                             void *userData,
-                                                            unsigned char *buf,
+                                                            MIDIMESSAGE *buf,
                                                             int nBytes));
 
   /**

@@ -344,7 +344,7 @@ extern int  midi_dev_list_dummy(CSOUND *csound, CS_MIDIDEVICE *list, int isOutpu
 extern int DummyMidiInOpen(CSOUND *csound, void **userData,
                            const char *devName);
 extern int DummyMidiRead(CSOUND *csound, void *userData,
-                         unsigned char *buf, int nbytes);
+                         MIDIMESSAGE *buf, int nbytes);
 extern int DummyMidiOutOpen(CSOUND *csound, void **userData,
                      const char *devName);
 extern int DummyMidiWrite(CSOUND *csound, void *userData,

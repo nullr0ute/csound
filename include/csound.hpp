@@ -534,7 +534,7 @@ public:
     csoundSetExternalMidiInOpenCallback(csound, func);
   }
   virtual void SetExternalMidiReadCallback(
-      int (*func)(CSOUND *, void *, unsigned char *, int))
+      int (*func)(CSOUND *, void *, MIDIMESSAGE *, int))
   {
     csoundSetExternalMidiReadCallback(csound, func);
   }
