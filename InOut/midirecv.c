@@ -207,7 +207,7 @@ void midi_ctl_reset(CSOUND *csound, int16 chan)
 
 void m_chanmsg(CSOUND *csound, MEVENT *mep)
 {
-    MCHNBLK *chn = csound->m_chnbp[mep->chan];
+    MCHNBLK *chn = csound->m_chnbp[mep->chan + mep->dev*MAXCHAN];
     int16   n;
     MYFLT   *fp;
 
@@ -377,7 +377,7 @@ void m_chn_init_all(CSOUND *csound)
            csound->engineState.instrtxtp[defaultinsno] == NULL);
     if (defaultinsno > (int) csound->engineState.maxinsno)
       defaultinsno = 0;         /* no instruments */
-    for (chan = (int16) 0; chan < (int16) 16; chan++) {
+    for (chan = (int16) 0; chan < (int16) (MAXCHAN*MAXPORT); chan++) {
       /* alloc a midi control blk for midi channel */
       /*  & assign default instrument number       */
       csound->m_chnbp[chan] =
@@ -415,7 +415,7 @@ int m_chinsno(CSOUND *csound, int chan, int insno, int reset_ctls)
     MCHNBLK  *chn;
     MEVENT   mev;
 
-    if (chan < 0 || chan > 15)
+    if (chan < 0 || chan >= MAXCHAN*MAXPORT)
       return csound->InitError(csound, Str("illegal channel number"));
     chn = csound->m_chnbp[chan];
     if (insno <= 0) {
@@ -568,7 +568,6 @@ int sensMidi(CSOUND *csound)
     mep->dat1 = mmsg->bData[1];
     mep->dat2 = mmsg->bData[2];
     mep->dev =  mmsg->bData[3];
-    printf("Dev=%lld \n", mep->dev);
     /* Enter the input event into a buffer used by 'midiin'. */
     if (mep->type != SYSTEM_TYPE) {
       MIDIMESSAGE *pMessage =

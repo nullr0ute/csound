@@ -177,7 +177,8 @@ extern int ISSTRCOD(MYFLT);
 #define DFLT_DBFS (FL(32768.0))
 
 #define MAXOCTS         8
-#define MAXCHAN         16      /* 16 MIDI channels; only one port for now */
+#define MAXCHAN         16      /* 16 MIDI channels; 16 ports */
+#define MAXPORT         16
 
          /* A440 tuning factor */
 #define ONEPT           (csound->A4/430.5389646099018460319362438314060262605)
@@ -1475,7 +1476,7 @@ typedef struct NAME__ {
     MYFLT         *auxspin;
     OPARMS        *oparms;
     /** reserve space for up to 4 MIDI devices */
-    MCHNBLK       *m_chnbp[64];
+    MCHNBLK       *m_chnbp[MAXCHAN*MAXPORT];
     int           dither_output;
     MYFLT         onedsr, sicvt;
     MYFLT         tpidsr, pidsr, mpidsr, mtpdsr;

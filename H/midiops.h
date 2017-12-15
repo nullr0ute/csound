@@ -58,6 +58,7 @@ typedef struct {
   MYFLT   *chnl;
     STRINGDAT *insno;
     MYFLT *iresetctls;
+  MYFLT *iport;
 } MASSIGNS;
 
 typedef struct {
@@ -65,6 +66,7 @@ typedef struct {
   MYFLT   *chnl;
     MYFLT *insno;
     MYFLT *iresetctls;
+  MYFLT *iport;
 } MASSIGN;
 
 typedef struct {

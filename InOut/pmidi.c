@@ -284,7 +284,7 @@ static int OpenMidiInDevice_(CSOUND *csound, void **userData, const char *dev)
                          NULL, 512L, (PmTimeProcPtr) NULL, NULL);
 	// record device number so we can potentially send
 	// streams to different internal ports
-	next->devnum = dev[0] == 'a' ? 0 : i;
+	next->devnum = dev[0] == 'x' ? i : 0;
         if (UNLIKELY(retval != pmNoError)) {
           // Prevent leaking memory from "data"
           if (data) {

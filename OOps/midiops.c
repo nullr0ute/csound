@@ -59,12 +59,12 @@ int massign_p(CSOUND *csound, MASSIGN *p)
     int   chnl = (int)(*p->chnl + FL(0.5));
     int   resetCtls;
     int   retval = OK;
-
+    printf("%lf \n", *p->iport);
     resetCtls = (*p->iresetctls == FL(0.0) ? 0 : 1);
     if (--chnl >= 0)
-      retval = m_chinsno(csound, chnl, (int) *p->insno, resetCtls);
+      retval = m_chinsno(csound, chnl + (int) (*p->iport*MAXCHAN) - 1, (int) *p->insno, resetCtls);
     else {
-      for (chnl = 0; chnl < 16; chnl++) {
+      for (chnl = 0; chnl < MAXCHAN*MAXPORT; chnl++) {
         if (m_chinsno(csound, chnl, (int) *p->insno, resetCtls) != OK)
           retval = NOTOK;
       }
@@ -86,7 +86,7 @@ int massign_S(CSOUND *csound, MASSIGNS *p)
     if (--chnl >= 0)
       retval = m_chinsno(csound, chnl, (int) instno, resetCtls);
     else {
-      for (chnl = 0; chnl < 16; chnl++) {
+      for (chnl = 0; chnl < MAXCHAN*MAXPORT; chnl++) {
         if (m_chinsno(csound, chnl, (int) instno, resetCtls) != OK)
           retval = NOTOK;
       }
