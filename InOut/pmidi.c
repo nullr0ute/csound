@@ -45,6 +45,7 @@ void _wassert(wchar_t *condition)
 
 typedef struct _pmall_data {
   PortMidiStream *midistream;
+  int dev_offset;
   struct _pmall_data *next;
 } pmall_data;
 
@@ -236,10 +237,10 @@ static int OpenMidiInDevice_(CSOUND *csound, void **userData, const char *dev)
     else if (UNLIKELY((dev[0] < '0' || dev[0] > '9') && dev[0] != 'a')) {
       portMidiErrMsg(csound,
                      Str("error: must specify a device number (>=0) or"
-                         " 'a' for all, not a name"));
+                         " 'a' for all, 'x' for extended, not a name"));
       return -1;
     }
-    else if (dev[0] != 'a') {
+    else if (dev[0] != 'a' || dev[0] != 'x') {
       devnum = (int)atoi(dev);
       if (UNLIKELY(devnum < 0 || devnum >= cntdev)) {
         portMidiErrMsg(csound, Str("error: device number is out of range"));
@@ -247,11 +248,11 @@ static int OpenMidiInDevice_(CSOUND *csound, void **userData, const char *dev)
       }
     }
     else {
-    // allow to proceed if 'a' is given even if there are no MIDI devices
+    // allow to proceed if 'a'/'x' is given even if there are no MIDI devices
       devnum = -1;
     }
 
-    if (UNLIKELY(cntdev < 1 && (dev==NULL || dev[0] != 'a'))) {
+    if (UNLIKELY(cntdev < 1 && (dev==NULL || dev[0] != 'a' || dev[0] != 'x'))) {
       return portMidiErrMsg(csound, Str("no input devices are available"));
     }
     opendevs = 0;
@@ -281,6 +282,7 @@ static int OpenMidiInDevice_(CSOUND *csound, void **userData, const char *dev)
         retval = Pm_OpenInput(&next->midistream,
                  (PmDeviceID) portMidi_getRealDeviceID(i, 0),
                          NULL, 512L, (PmTimeProcPtr) NULL, NULL);
+	next->dev_offset = dev[0] == 'a' ? 0 : i;
         if (UNLIKELY(retval != pmNoError)) {
           // Prevent leaking memory from "data"
           if (data) {
@@ -291,7 +293,6 @@ static int OpenMidiInDevice_(CSOUND *csound, void **userData, const char *dev)
                                           i, Pm_GetErrorText(retval));
         }
         /* only interested in channel messages (note on, control change, etc.) */
-        /* GAB: fixed for portmidi v.23Aug06 */
         Pm_SetFilter(next->midistream, (PM_FILT_ACTIVE | PM_FILT_SYSEX));
         /* empty the buffer after setting filter */
         while (Pm_Poll(next->midistream) == TRUE) {
