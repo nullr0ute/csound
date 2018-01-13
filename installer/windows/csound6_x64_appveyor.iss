@@ -234,10 +234,10 @@ Source: "..\..\msvc\deps\bin\*.dll"; DestDir: "{#APP_BIN}"; Flags: ignoreversion
 Source: "..\..\msvc\deps\fluidsynthdeps\bin\*.dll"; DestDir: "{#APP_BIN}"; Flags: ignoreversion; Components: core;
 
 ; NOTE: The .qml files are compiled into the resources of CsoundQt.
-;Source: "..\..\msvc\csound-vs\RelWithDebInfo\CsoundQt-d-cs6.*"; DestDir: "{#APP_BIN}"; Flags: skipifsourcedoesntexist; Components: core;
-;Source: "..\..\msvc\csound-vs\RelWithDebInfo\*.pdb"; DestDir: "{#APP_BIN}"; Flags: skipifsourcedoesntexist; Components: core;
-Source: "..\..\msvc\staging\CsoundQt\examples\*.*"; DestDir: "{#APP_BIN}\Examples"; Flags: ignoreversion recursesubdirs;  Components: core
-Source: "..\..\msvc\staging\CsoundQt\src\Examples\*.*"; DestDir: "{#APP_BIN}\Examples"; Flags: ignoreversion recursesubdirs;  Components: core
+;;Source: "..\..\msvc\csound-vs\RelWithDebInfo\CsoundQt-d-cs6.*"; DestDir: "{#APP_BIN}"; Flags: skipifsourcedoesntexist; Components: core;
+;;Source: "..\..\msvc\csound-vs\RelWithDebInfo\*.pdb"; DestDir: "{#APP_BIN}"; Flags: skipifsourcedoesntexist; Components: core;
+;;Source: "..\..\msvc\staging\CsoundQt\examples\*.*"; DestDir: "{#APP_BIN}\Examples"; Flags: ignoreversion recursesubdirs;  Components: core
+;;Source: "..\..\msvc\staging\CsoundQt\src\Examples\*.*"; DestDir: "{#APP_BIN}\Examples"; Flags: ignoreversion recursesubdirs;  Components: core
 
 Source: "{#QtSdkBinDir}libEGL.dll"; DestDir: "{#APP_BIN}"; Components: core;
 Source: "{#QtSdkBinDir}libGLESv2.dll"; DestDir: "{#APP_BIN}"; Components: core;
